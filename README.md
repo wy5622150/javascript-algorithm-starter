@@ -1,6 +1,7 @@
 # JavaScript 学习平台
 
 一个基于 Vite + React 的交互式 JavaScript 学习平台，帮助初学者从零基础系统学习 JavaScript 核心概念。
+https://wy5622150.github.io/javascript-algorithm-starter/
 
 ## ✨ 功能特点
 
