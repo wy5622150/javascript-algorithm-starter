@@ -10,6 +10,9 @@ import lesson06 from './lesson06.js';
 import lesson07 from './lesson07.js';
 import lesson08 from './lesson08.js';
 import lesson09 from './lesson09.js';
+import lesson10 from './lesson10.js';
+import lesson11 from './lesson11.js';
+import lesson12 from './lesson12.js';
 
 // 导出所有课程（按ID顺序）
 export const lessons = [
@@ -22,12 +25,16 @@ export const lessons = [
   lesson07,  // id: 7 - 面向对象编程
   lesson08,  // id: 8 - 递归
   lesson09,  // id: 9 - 栈和队列
+  lesson10,  // id: 10 - 循环练习
+  lesson11,  // id: 11 - 函数练习
+  lesson12,  // id: 12 - 传值与传址练习
 ];
 
 // 按分类导出
 export const lessonsByCategory = {
   基础: lessons.filter(lesson => lesson.category === '基础'),
   进阶: lessons.filter(lesson => lesson.category === '进阶'),
+  练习: lessons.filter(lesson => lesson.category === '练习'),
 };
 
 // 按难度导出

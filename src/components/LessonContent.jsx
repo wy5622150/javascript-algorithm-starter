@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Code, CheckCircle } from 'lucide-react';
 
 // 可折叠的内容模块组件
 function CollapsibleSection({ title, children, isOpen, onToggle }) {
@@ -33,6 +33,11 @@ export default function LessonContent({ lesson, onCodeChange }) {
         选择一个课程开始学习
       </div>
     );
+  }
+
+  // 如果是练习题课程，使用特殊渲染
+  if (lesson.isExercise && lesson.exercises) {
+    return <ExerciseContent lesson={lesson} onCodeChange={onCodeChange} />;
   }
 
   // 解析内容，按二级标题分组，并提取代码示例
@@ -227,6 +232,173 @@ export default function LessonContent({ lesson, onCodeChange }) {
           ))}
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+// 练习题专用组件
+function ExerciseContent({ lesson, onCodeChange }) {
+  const [openExerciseIndex, setOpenExerciseIndex] = useState(null);
+
+  const handleExerciseToggle = (index) => {
+    const newIndex = openExerciseIndex === index ? null : index;
+    setOpenExerciseIndex(newIndex);
+    
+    // 更新代码编辑器内容为该练习题的代码模板
+    if (newIndex !== null && onCodeChange) {
+      const exercise = lesson.exercises[newIndex];
+      onCodeChange(exercise.starterCode);
+    }
+  };
+
+  // 渲染Markdown格式的描述
+  const renderDescription = (text) => {
+    const lines = text.split('\n');
+    return lines.map((line, idx) => {
+      const trimmed = line.trim();
+      if (!trimmed) return null;
+      
+      // 处理代码块
+      if (trimmed.startsWith('```')) {
+        return null; // 代码块标记不显示
+      }
+      
+      // 处理加粗文本
+      if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+        const content = trimmed.slice(2, -2);
+        return (
+          <p key={idx} className="font-bold text-gray-800 mb-2">
+            {content}
+          </p>
+        );
+      }
+      
+      // 处理列表项
+      if (trimmed.startsWith('- ')) {
+        return (
+          <li key={idx} className="ml-4 text-gray-700">
+            {trimmed.substring(2)}
+          </li>
+        );
+      }
+      
+      // 处理代码内容（在```之间的内容）
+      if (idx > 0 && lines[idx - 1].trim().startsWith('```')) {
+        return (
+          <pre key={idx} className="bg-gray-100 p-2 rounded text-sm font-mono text-gray-800">
+            {trimmed}
+          </pre>
+        );
+      }
+      
+      // 普通文本
+      return (
+        <p key={idx} className="text-gray-700 mb-2">
+          {trimmed}
+        </p>
+      );
+    }).filter(Boolean);
+  };
+
+  return (
+    <div className="h-full overflow-auto bg-gradient-to-b from-white to-gray-50">
+      <div className="p-8 max-w-4xl">
+        <div className="mb-5">
+          <span className="inline-flex items-center px-4 py-2 text-xs font-bold rounded-full bg-green-100 text-green-700 border-2 border-green-200">
+            ✓ 练习题
+          </span>
+        </div>
+        
+        <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight">
+          {lesson.title}
+        </h1>
+        
+        <p className="text-gray-600 mb-10 text-lg leading-relaxed">
+          {lesson.description}
+        </p>
+
+        {/* 练习说明 */}
+        {lesson.introduction && (
+          <div className="mb-8 p-6 bg-blue-50 border-l-4 border-blue-500 rounded-r-xl">
+            <div className="prose prose-sm max-w-none">
+              {lesson.introduction.split('\n').map((line, idx) => {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('##')) {
+                  return <h3 key={idx} className="text-xl font-bold text-gray-800 mt-4 mb-2">{trimmed.substring(3)}</h3>;
+                }
+                if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+                  return <p key={idx} className="font-semibold text-gray-700 mb-2">{trimmed.slice(2, -2)}</p>;
+                }
+                if (trimmed.startsWith('- ')) {
+                  return <li key={idx} className="ml-4 text-gray-700">{trimmed.substring(2)}</li>;
+                }
+                if (trimmed) {
+                  return <p key={idx} className="text-gray-700 mb-2">{trimmed}</p>;
+                }
+                return null;
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 练习题列表 */}
+        <div className="space-y-5">
+          {lesson.exercises.map((exercise, idx) => (
+            <div key={exercise.id} className="border-2 border-gray-200 rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-lg transition-all duration-200">
+              <button
+                onClick={() => handleExerciseToggle(idx)}
+                className="w-full flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-white hover:from-gray-100 hover:to-gray-50 transition-colors duration-200"
+              >
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3">
+                  {openExerciseIndex === idx ? <ChevronDown size={24} className="text-indigo-600" /> : <ChevronRight size={24} className="text-gray-400" />}
+                  {exercise.title}
+                </h3>
+              </button>
+              
+              {openExerciseIndex === idx && (
+                <div className="p-6 pt-4 space-y-5 border-t-2 border-gray-100">
+                  {/* 题目描述 */}
+                  <div className="mb-4">
+                    {renderDescription(exercise.description)}
+                  </div>
+
+                  {/* 代码模板 */}
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border-2 border-blue-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Code size={20} className="text-blue-600" />
+                      <h4 className="text-lg font-bold text-blue-900">💻 代码模板</h4>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-xl p-4 shadow-xl border-2 border-gray-700 overflow-x-auto">
+                      <pre className="text-sm text-gray-100 font-mono leading-loose">
+                        <code>{exercise.starterCode}</code>
+                      </pre>
+                    </div>
+                    <p className="text-sm text-blue-700 mt-3">
+                      💡 点击展开此练习题时，代码模板会自动加载到右侧编辑器
+                    </p>
+                  </div>
+
+                  {/* 标准答案 */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border-2 border-green-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle size={20} className="text-green-600" />
+                      <h4 className="text-lg font-bold text-green-900">✅ 标准答案</h4>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-xl p-4 shadow-xl border-2 border-gray-700 overflow-x-auto">
+                      <pre className="text-sm text-gray-100 font-mono leading-loose">
+                        <code>{exercise.solution}</code>
+                      </pre>
+                    </div>
+                    <p className="text-sm text-green-700 mt-3">
+                      💡 先尝试自己完成，遇到困难再参考答案
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
